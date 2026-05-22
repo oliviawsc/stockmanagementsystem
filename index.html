@@ -15,8 +15,8 @@
     <style>
         /* Plantation theme colours */
         body {
-            background-color: #F0FFF4; /* Honeydew */
-            color: #166534;            /* Dark green text */
+            background-color: #F0FFF4;
+            color: #166534;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         /* Sidebar nav active state */
@@ -33,6 +33,120 @@
         /* Card hover */
         .summary-card { transition: transform 0.15s ease-in-out; }
         .summary-card:hover { transform: translateY(-2px); }
+
+        /* ── RESPONSIVE LAYOUT ── */
+
+        /* App wrapper: flex row on desktop, column on mobile */
+        #appLayout {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Desktop: sidebar fixed on left, main beside it */
+        @media (min-width: 768px) {
+            #appLayout {
+                flex-direction: row;
+            }
+            #sidebar {
+                position: sticky;
+                top: 0;
+                height: 100vh;
+                overflow-y: auto;
+                flex-shrink: 0;
+                width: 16rem; /* w-64 */
+                transform: translateX(0) !important;
+            }
+            #mobileTopBar  { display: none !important; }
+            #sidebarOverlay { display: none !important; }
+            #mainContent { padding: 2rem; }
+        }
+
+        /* Mobile: sidebar hidden off-screen left, slides in */
+        @media (max-width: 767px) {
+            #sidebar {
+                position: fixed;
+                top: 0; left: 0; bottom: 0;
+                width: 80vw;
+                max-width: 300px;
+                z-index: 200;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                overflow-y: auto;
+                height: 100vh;
+            }
+            #sidebar.open {
+                transform: translateX(0);
+            }
+            #sidebarOverlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.45);
+                z-index: 199;
+            }
+            #sidebarOverlay.open { display: block; }
+            #mainContent {
+                padding: 1rem;
+                padding-top: 0.5rem;
+            }
+            /* Push main content below the top bar */
+            #mainWrapper {
+                padding-top: 56px;
+                flex: 1;
+                overflow-y: auto;
+            }
+        }
+
+        /* Mobile top bar */
+        #mobileTopBar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 56px;
+            background: #166534;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1rem;
+            z-index: 198;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        #mobileTopBar h1 {
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        #hamburgerBtn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        #hamburgerBtn span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: #fff;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+        /* Responsive table font size */
+        @media (max-width: 767px) {
+            table { font-size: 0.78rem; }
+            th, td { padding: 6px 8px !important; }
+            h2 { font-size: 1.5rem !important; }
+            h3 { font-size: 1rem !important; }
+        }
+
+        /* Login card responsive */
+        @media (max-width: 480px) {
+            #loginCard { margin: 1rem; }
+            #loginCard .px-8 { padding-left: 1.25rem; padding-right: 1.25rem; }
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -93,11 +207,27 @@
      ================================================================= -->
 <div id="appLayout" class="hidden">
 
+    <!-- MOBILE TOP BAR (hidden on desktop via CSS) -->
+    <div id="mobileTopBar">
+        <button id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Open menu">
+            <span></span><span></span><span></span>
+        </button>
+        <h1>🌴 OilPalm Stock</h1>
+        <div style="width:36px"></div>
+    </div>
+
+    <!-- SIDEBAR BACKDROP (mobile only) -->
+    <div id="sidebarOverlay" onclick="closeSidebar()"></div>
+
     <!-- SIDEBAR -->
-    <aside class="w-64 bg-white border-r-2 border-green-700 shadow-lg flex-shrink-0">
-        <div class="p-5 border-b-2 border-green-700">
-            <h1 class="text-xl font-bold text-green-800">🌴 OilPalm Stock</h1>
-            <p class="text-xs text-green-600 mt-1" data-i18n="app_subtitle">Plantation Inventory System</p>
+    <aside id="sidebar" class="w-64 bg-white border-r-2 border-green-700 shadow-lg flex-shrink-0">
+        <div class="p-5 border-b-2 border-green-700 flex items-center justify-between">
+            <div>
+                <h1 class="text-xl font-bold text-green-800">🌴 OilPalm Stock</h1>
+                <p class="text-xs text-green-600 mt-1" data-i18n="app_subtitle">Plantation Inventory System</p>
+            </div>
+            <!-- Close button visible only on mobile -->
+            <button onclick="closeSidebar()" id="sidebarCloseBtn" class="text-green-700 hover:text-green-900 text-xl font-bold ml-2" style="display:none" aria-label="Close">✕</button>
         </div>
         <nav class="p-3 space-y-1">
             <button data-target="dashboard"    class="nav-item active w-full text-left px-4 py-2 rounded-lg font-medium" data-i18n="nav_dashboard">📊 Dashboard</button>
@@ -157,8 +287,9 @@
         </div>
     </aside>
 
-    <!-- MAIN CONTENT AREA -->
-    <main class="flex-1 p-8 overflow-y-auto">
+    <!-- MAIN WRAPPER + CONTENT -->
+    <div id="mainWrapper">
+    <main id="mainContent" class="p-8">
 
         <!-- ============ PAGE 1: DASHBOARD ============ -->
         <section id="dashboard" class="page-section active">
@@ -670,6 +801,7 @@
         </section>
 
     </main>
+    </div><!-- end mainWrapper -->
 </div><!-- end appLayout -->
 
 <!-- =================================================================
@@ -2010,13 +2142,8 @@ document.getElementById('locDownloadTemplateBtn').addEventListener('click', () =
    INITIALISATION
    ----------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
-    // default the transaction date input to today
-    document.getElementById('txnDate').valueAsDate = new Date();
-    // render instantly from cached localStorage, then pull fresh data from Supabase
-    refreshAll();
-    loadFromSupabase();
-    // Apply saved language preference
-    setLang(localStorage.getItem('opp_lang') || 'en');
+    // App boot is now handled entirely by the auth layer (bootApp / resumeSession).
+    // This block is intentionally left empty to avoid double-initialisation.
 });
 
 /* =================================================================
@@ -2309,6 +2436,7 @@ function setLang(lang) {
     document.getElementById('langMS').classList.toggle('text-white',   lang === 'ms');
     document.getElementById('langMS').classList.toggle('bg-white',     lang !== 'ms');
     document.getElementById('langMS').classList.toggle('text-green-700', lang !== 'ms');
+}
 /* =================================================================
    AUTH SYSTEM
    - Super Admin: hardcoded, full access.
@@ -2671,14 +2799,68 @@ function saveEditUser() {
 }
 
 // ── Auto-resume session on page load ──────────────────────────────
-(function resumeSession() {
+document.addEventListener('DOMContentLoaded', () => {
+    renderPermissionCheckboxes();
     const session = loadSession();
     if (session) {
         bootApp(session);
     }
-    // Always render permission checkboxes in the register form
-    renderPermissionCheckboxes();
-})();
+    // Apply saved language preference regardless of login state
+    setLang(localStorage.getItem('opp_lang') || 'en');
+});
+/* =================================================================
+   RESPONSIVE SIDEBAR — mobile hamburger toggle
+   ================================================================= */
+function toggleSidebar() {
+    const sidebar  = document.getElementById('sidebar');
+    const overlay  = document.getElementById('sidebarOverlay');
+    const closeBtn = document.getElementById('sidebarCloseBtn');
+    const isOpen   = sidebar.classList.contains('open');
+    if (isOpen) {
+        closeSidebar();
+    } else {
+        sidebar.classList.add('open');
+        overlay.classList.add('open');
+        if (closeBtn) closeBtn.style.display = 'block';
+    }
+}
+
+function closeSidebar() {
+    const sidebar  = document.getElementById('sidebar');
+    const overlay  = document.getElementById('sidebarOverlay');
+    const closeBtn = document.getElementById('sidebarCloseBtn');
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+    if (closeBtn) closeBtn.style.display = 'none';
+}
+
+// Show/hide close button and mobileTopBar based on screen width
+function applyResponsiveState() {
+    const isMobile = window.innerWidth < 768;
+    const topBar   = document.getElementById('mobileTopBar');
+    const closeBtn = document.getElementById('sidebarCloseBtn');
+    if (topBar)   topBar.style.display   = isMobile ? 'flex' : 'none';
+    if (closeBtn) closeBtn.style.display = 'none'; // only show when sidebar is open on mobile
+    if (!isMobile) {
+        // Ensure sidebar is always visible and overlay is hidden on desktop
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        if (sidebar) sidebar.classList.remove('open');
+        if (overlay) overlay.classList.remove('open');
+    }
+}
+
+window.addEventListener('resize', applyResponsiveState);
+document.addEventListener('DOMContentLoaded', applyResponsiveState);
+
+// Auto-close sidebar on mobile when a nav item is tapped
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-target]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (window.innerWidth < 768) closeSidebar();
+        });
+    });
+});
 </script>
 </body>
 </html>
