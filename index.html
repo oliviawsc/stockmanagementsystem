@@ -763,27 +763,6 @@
                     </table>
                 </div>
             </div>
-
-            <!-- Manuring history (actual applications recorded via transactions) -->
-            <div class="bg-white p-6 rounded-xl shadow">
-                <h3 class="text-xl font-bold mb-4" data-i18n="manuring_history_title">Manuring Application History</h3>
-                <p class="text-xs text-green-700 mb-3" data-i18n="manuring_history_hint">Auto-generated from fertilizer "Out" transactions linked to a round.</p>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-green-100 text-green-800">
-                            <tr>
-                                <th class="px-3 py-2 text-left" data-i18n="col_date">Date</th>
-                                <th class="px-3 py-2 text-left" data-i18n="col_round">Round</th>
-                                <th class="px-3 py-2 text-left" data-i18n="col_block">Block</th>
-                                <th class="px-3 py-2 text-left" data-i18n="manuring_lbl_fertilizer">Fertilizer</th>
-                                <th class="px-3 py-2 text-left" data-i18n="col_qty_applied">Qty Applied</th>
-                                <th class="px-3 py-2 text-left" data-i18n="col_ref">Ref</th>
-                            </tr>
-                        </thead>
-                        <tbody id="manuringHistoryBody"></tbody>
-                    </table>
-                </div>
-            </div>
         </section>
 
         <!-- ============ PAGE 8: MANURING PROGRESS SUMMARY ============ -->
@@ -805,6 +784,27 @@
                             </tr>
                         </thead>
                         <tbody id="roundProgressBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Manuring Application History (moved from Manuring Program) -->
+            <div class="bg-white p-6 rounded-xl shadow">
+                <h3 class="text-xl font-bold mb-4" data-i18n="manuring_history_title">Manuring Application History</h3>
+                <p class="text-xs text-green-700 mb-3" data-i18n="manuring_history_hint">Auto-generated from fertilizer "Out" transactions linked to a round.</p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-green-100 text-green-800">
+                            <tr>
+                                <th class="px-3 py-2 text-left" data-i18n="col_date">Date</th>
+                                <th class="px-3 py-2 text-left" data-i18n="col_round">Round</th>
+                                <th class="px-3 py-2 text-left" data-i18n="col_block">Block</th>
+                                <th class="px-3 py-2 text-left" data-i18n="manuring_lbl_fertilizer">Fertilizer</th>
+                                <th class="px-3 py-2 text-left" data-i18n="col_qty_applied">Qty Applied</th>
+                                <th class="px-3 py-2 text-left" data-i18n="col_ref">Ref</th>
+                            </tr>
+                        </thead>
+                        <tbody id="manuringHistoryBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -1095,6 +1095,11 @@ async function loadFromSupabase() {
         lastKnownIds.opp_manuring_rounds = new Set(manuringRounds.map(r => r.id));
 
         refreshAll();
+        // Explicitly re-render manuring sections after Supabase data arrives
+        // so they show correctly even if the user is already on those pages
+        renderManuringRounds();
+        renderManuringHistory();
+        renderRoundProgress();
     } catch (err) {
         console.error('[Supabase] loadFromSupabase failed', err);
     }
@@ -2857,9 +2862,9 @@ function attemptLogin() {
         const session = {
             email:       SUPER_ADMIN.email,
             name:        SUPER_ADMIN.name,
-            estate:      SUPER_ADMIN.estate, // 'All Estates'
+            estate:      '',   // always start blank — user must select estate
             role:        'superadmin',
-            permissions: ALL_SECTIONS.map(s => s.id), // full access
+            permissions: ALL_SECTIONS.map(s => s.id),
         };
         saveSession(session);
         bootApp(session);
@@ -2879,7 +2884,7 @@ function attemptLogin() {
         email:       user.email,
         name:        user.name,
         estates:     estates,
-        estate:      user.estate || estates[0] || '',  // last active estate
+        estate:      '',   // always start with no estate selected — user must pick one
         role:        'user',
         permissions: user.permissions || [],
     };
@@ -2911,17 +2916,14 @@ function bootApp(session) {
 
     estateSelect.innerHTML = '<option value="">-- Select Estate --</option>' +
         allowedEstates.map(e => `<option value="${e}">${e}</option>`).join('');
-    estateSelect.value = session.estate || '';
+    // Always start with no estate selected — blank state shown until user picks one
+    estateSelect.value = '';
 
-    // Set the active estate globally — all data reads/writes use this
-    activeEstate = session.estate || '';
+    // Active estate is always empty on fresh login
+    activeEstate = '';
 
-    // Show blank state if no estate selected yet; hide it once one is chosen
-    if (activeEstate) {
-        hideEstateBlankState();
-    } else {
-        showEstateBlankState();
-    }
+    // Always show blank state on login — user must select an estate
+    showEstateBlankState();
 
     // Load cached data for this estate from localStorage immediately
     if (activeEstate) loadEstateData(activeEstate);
@@ -3046,6 +3048,10 @@ function onSidebarEstateChange() {
     // Load cached data for new estate immediately, then fetch fresh from Supabase
     loadEstateData(newEstate);
     refreshAll();
+    // Explicitly render manuring sections with cached data right away
+    renderManuringRounds();
+    renderManuringHistory();
+    renderRoundProgress();
     loadFromSupabase();
 }
 
