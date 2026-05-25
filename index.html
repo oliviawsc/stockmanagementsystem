@@ -64,10 +64,11 @@
             }
             #mainWrapper {
                 flex: 1;
-                min-width: 0;       /* prevent flex child overflow */
+                min-width: 0;
                 display: flex;
                 flex-direction: column;
                 overflow-x: hidden;
+                position: relative;
             }
             #mainContent {
                 flex: 1;
@@ -322,6 +323,28 @@
 
     <!-- MAIN WRAPPER + CONTENT -->
     <div id="mainWrapper">
+
+    <!-- ── ESTATE BLANK STATE ── shown when no estate is selected yet ── -->
+    <div id="estateBlankState" style="
+        display: none;
+        position: absolute; inset: 0;
+        background: #f0fff4;
+        z-index: 10;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+    ">
+        <div style="font-size: 4rem; line-height:1;">🌴</div>
+        <h2 style="font-family:'Segoe UI',sans-serif; font-size:1.5rem; font-weight:700; color:#166534;">
+            Please Select an Estate
+        </h2>
+        <p style="color:#4b7a4b; font-size:0.95rem; text-align:center; max-width:320px;">
+            Choose an estate from the sidebar to load its data and begin managing stock.
+        </p>
+        <div style="width:48px; height:4px; background:#16a34a; border-radius:99px; margin-top:4px;"></div>
+    </div>
+
     <main id="mainContent" class="p-8">
 
         <!-- ============ PAGE 1: DASHBOARD ============ -->
@@ -406,11 +429,11 @@
                 <form id="itemForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-semibold mb-1" data-i18n="items_lbl_name">Item Name</label>
-                        <input id="itemName" required class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="text" placeholder="e.g. Glyphosate 41%" />
+                        <input id="itemName" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="text" placeholder="e.g. Glyphosate 41%" />
                     </div>
                     <div>
                         <label class="block text-sm font-semibold mb-1" data-i18n="col_category">Category</label>
-                        <select id="itemCategory" required class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
+                        <select id="itemCategory" class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
                             <option value="" data-i18n="select_category">-- Select Category --</option>
                             <option value="Fertilizer" data-i18n="cat_fertilizer">Fertilizer</option>
                             <option value="Chemical" data-i18n="cat_chemical">Chemical</option>
@@ -419,15 +442,21 @@
                     </div>
                     <div>
                         <label class="block text-sm font-semibold mb-1" data-i18n="col_unit">Unit</label>
-                        <input id="itemUnit" required class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="text" placeholder="e.g. Bag, Litre, kg" />
+                        <input id="itemUnit" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="text" placeholder="e.g. Bag, Litre, kg" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Qty / Unit <span class="text-gray-400 font-normal text-xs">(base qty per 1 unit)</span></label>
+                        <input id="itemQtyPerUnit" min="0" step="0.01" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="number" placeholder="e.g. 50" />
+                        <p class="text-xs text-green-700 mt-1 italic">How much base quantity is in 1 unit. e.g. 1 Bag = 50 kg. Used to calculate total usage in base units.</p>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold mb-1" data-i18n="items_lbl_threshold">Minimum Threshold</label>
                         <input id="itemThreshold" min="0" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="number" placeholder="0" />
                         <p class="text-xs text-green-700 mt-1 italic" data-i18n="items_threshold_hint">⚠️ Min Threshold only applies to <b>Chemicals</b>. Fertilizers & Seedlings ignore this value.</p>
                     </div>
-                    <div class="md:col-span-2">
-                        <button type="submit" class="bg-green-800 hover:bg-green-900 text-white px-6 py-2 rounded-lg font-semibold" data-i18n="btn_save_item">Save Item</button>
+                    <div class="md:col-span-2 flex gap-3">
+                        <button id="itemSubmitBtn" type="button" onclick="saveItem()" class="bg-green-800 hover:bg-green-900 text-white px-6 py-2 rounded-lg font-semibold" data-i18n="btn_save_item">Save Item</button>
+                        <button id="itemCancelBtn" type="button" onclick="cancelEditItem()" class="hidden bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg font-semibold" data-i18n="btn_cancel_edit">Cancel Edit</button>
                     </div>
                 </form>
             </div>
@@ -442,6 +471,7 @@
                                 <th class="px-3 py-2 text-left" data-i18n="col_item_name">Item Name</th>
                                 <th class="px-3 py-2 text-left" data-i18n="col_category">Category</th>
                                 <th class="px-3 py-2 text-left" data-i18n="col_unit">Unit</th>
+                                <th class="px-3 py-2 text-left">Qty / Unit</th>
                                 <th class="px-3 py-2 text-left" data-i18n="col_min_threshold">Min Threshold</th>
                                 <th class="px-3 py-2 text-left" data-i18n="col_action">Action</th>
                             </tr>
@@ -469,13 +499,13 @@
                     </div>
                     <div>
                         <label class="block text-sm font-semibold mb-1" data-i18n="col_item">Item</label>
-                        <select id="txnItem" required class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
+                        <select id="txnItem" class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
                             <option value="" data-i18n="select_item">-- Select Item --</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold mb-1" data-i18n="txn_lbl_type">Transaction Type</label>
-                        <select id="txnType" required class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
+                        <select id="txnType" class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
                             <option value="" data-i18n="select_type">-- Select Type --</option>
                             <option value="In">In</option>
                             <option value="Out">Out</option>
@@ -484,7 +514,7 @@
                     </div>
                     <div id="txnQtyWrap">
                         <label class="block text-sm font-semibold mb-1" data-i18n="col_qty">Quantity</label>
-                        <input id="txnQty" required min="0" step="0.01" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="number" />
+                        <input id="txnQty" min="0" step="0.01" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="number" />
                     </div>
                     <div>
                         <label class="block text-sm font-semibold mb-1" data-i18n="col_ref">Ref / DO No.</label>
@@ -492,11 +522,11 @@
                     </div>
                     <div>
                         <label class="block text-sm font-semibold mb-1" data-i18n="col_date">Date</label>
-                        <input id="txnDate" required class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="date" />
+                        <input id="txnDate" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="date" />
                     </div>
                     <div id="txnLocationWrap">
                         <label class="block text-sm font-semibold mb-1" data-i18n="col_location">Location</label>
-                        <select id="txnLocation" required class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
+                        <select id="txnLocation" class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
                             <option value="None/Storage" data-i18n="opt_none_storage">None/Storage</option>
                         </select>
                     </div>
@@ -538,7 +568,7 @@
                         <textarea id="txnRemarks" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" rows="2"></textarea>
                     </div>
                     <div class="md:col-span-2">
-                        <button type="submit" class="bg-green-800 hover:bg-green-900 text-white px-6 py-2 rounded-lg font-semibold" data-i18n="btn_save_txn">Save Transaction</button>
+                        <button type="button" onclick="saveTransaction()" class="bg-green-800 hover:bg-green-900 text-white px-6 py-2 rounded-lg font-semibold" data-i18n="btn_save_txn">Save Transaction</button>
                     </div>
                 </form>
             </div>
@@ -621,18 +651,18 @@
                 <form id="locForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-semibold mb-1" data-i18n="loc_lbl_name">Block Name</label>
-                        <input id="locName" required class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="text" placeholder="e.g. Block A1" />
+                        <input id="locName" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="text" placeholder="e.g. Block A1" />
                     </div>
                     <div>
                         <label class="block text-sm font-semibold mb-1" data-i18n="loc_lbl_area">Area (Ha)</label>
-                        <input id="locArea" required min="0" step="0.01" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="number" placeholder="e.g. 25.5" />
+                        <input id="locArea" min="0" step="0.01" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="number" placeholder="e.g. 25.5" />
                     </div>
                     <div>
                         <label class="block text-sm font-semibold mb-1" data-i18n="loc_lbl_palms">No. of Palm</label>
-                        <input id="locPalms" required min="0" step="1" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="number" placeholder="e.g. 3500" />
+                        <input id="locPalms" min="0" step="1" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="number" placeholder="e.g. 3500" />
                     </div>
                     <div class="md:col-span-2 flex gap-3">
-                        <button id="locSubmitBtn" type="submit" class="bg-green-800 hover:bg-green-900 text-white px-6 py-2 rounded-lg font-semibold" data-i18n="btn_save_loc">Save Location</button>
+                        <button id="locSubmitBtn" type="button" onclick="saveLocation()" class="bg-green-800 hover:bg-green-900 text-white px-6 py-2 rounded-lg font-semibold" data-i18n="btn_save_loc">Save Location</button>
                         <button id="locCancelBtn" type="button" class="hidden bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg font-semibold" data-i18n="btn_cancel_edit">Cancel Edit</button>
                     </div>
                 </form>
@@ -673,25 +703,41 @@
                 <form id="manuringForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-semibold mb-1" data-i18n="manuring_lbl_round_name">Round Name</label>
-                        <input id="mrName" required class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="text" placeholder="e.g. Round 1 - 2026" />
+                        <input id="mrName" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="text" placeholder="e.g. Round 1 - 2026" />
                     </div>
                     <div>
                         <label class="block text-sm font-semibold mb-1" data-i18n="manuring_lbl_fertilizer">Fertilizer</label>
-                        <select id="mrFertilizer" required class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
+                        <select id="mrFertilizer" class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
                             <option value="" data-i18n="select_fertilizer">-- Select Fertilizer --</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold mb-1" data-i18n="manuring_lbl_kg_palm">kg per Palm</label>
-                        <input id="mrKgPerPalm" required min="0" step="0.01" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="number" placeholder="e.g. 2" />
-                        <p class="text-xs text-green-700 mt-1 italic" data-i18n="manuring_kg_hint">Used to calculate Budgeted Fertilizer Needed: <b>(Total Palms × kg/palm) ÷ 50 kg/bag</b>.</p>
+                        <input id="mrKgPerPalm" min="0" step="0.01" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="number" placeholder="e.g. 2" />
+                        <p class="text-xs text-green-700 mt-1 italic" data-i18n="manuring_kg_hint">Used to calculate Budgeted Fertilizer Needed: <b>(Selected Blocks' Palms × kg/palm) ÷ 50 kg/bag</b>.</p>
+                    </div>
+                    <!-- Block selection — only blocks ticked here are included in this round -->
+                    <div class="md:col-span-2">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-sm font-semibold">Blocks Involved <span class="text-gray-400 font-normal text-xs">(optional)</span></label>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="mrSelectAllBlocks(true)"
+                                    class="text-xs bg-green-100 hover:bg-green-200 text-green-800 font-semibold px-3 py-1 rounded">✔ Select All</button>
+                                <button type="button" onclick="mrSelectAllBlocks(false)"
+                                    class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-3 py-1 rounded">✖ Clear All</button>
+                            </div>
+                        </div>
+                        <div id="mrBlocksGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 border border-green-200 rounded-lg p-3 bg-green-50">
+                            <p class="text-xs text-gray-400 col-span-full italic">No blocks registered yet. Add blocks in Location Area first.</p>
+                        </div>
+                        <p class="text-xs text-green-700 mt-1 italic">If no blocks are selected, budget is calculated using all registered blocks' palm counts.</p>
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-sm font-semibold mb-1" data-i18n="manuring_lbl_notes">Notes</label>
                         <textarea id="mrNotes" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" rows="2" placeholder="e.g. Apply pre-rainy season"></textarea>
                     </div>
                     <div class="md:col-span-2 flex gap-3">
-                        <button id="mrSubmitBtn" type="submit" class="bg-green-800 hover:bg-green-900 text-white px-6 py-2 rounded-lg font-semibold" data-i18n="btn_save_round">Save Round</button>
+                        <button id="mrSubmitBtn" type="button" onclick="saveManuringRound()" class="bg-green-800 hover:bg-green-900 text-white px-6 py-2 rounded-lg font-semibold" data-i18n="btn_save_round">Save Round</button>
                         <button id="mrCancelBtn" type="button" class="hidden bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg font-semibold" data-i18n="btn_cancel_edit">Cancel Edit</button>
                     </div>
                 </form>
@@ -706,8 +752,10 @@
                             <tr>
                                 <th class="px-3 py-2 text-left" data-i18n="col_round">Round</th>
                                 <th class="px-3 py-2 text-left" data-i18n="manuring_lbl_fertilizer">Fertilizer</th>
+                                <th class="px-3 py-2 text-left">Blocks Involved</th>
                                 <th class="px-3 py-2 text-right" data-i18n="col_budgeted">Budgeted Fertilizer Needed</th>
                                 <th class="px-3 py-2 text-left" data-i18n="manuring_lbl_notes">Notes</th>
+                                <th class="px-3 py-2 text-left">Transactions</th>
                                 <th class="px-3 py-2 text-left" data-i18n="col_action">Action</th>
                             </tr>
                         </thead>
@@ -858,7 +906,7 @@
             </div>
             <div>
                 <label class="block text-sm font-semibold mb-1" data-i18n="txn_lbl_type">Transaction Type</label>
-                <select id="editTxnType" required class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
+                <select id="editTxnType" class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
                     <option value="In">In</option>
                     <option value="Out">Out</option>
                     <option value="Adj">Adj</option>
@@ -866,11 +914,11 @@
             </div>
             <div>
                 <label class="block text-sm font-semibold mb-1" data-i18n="col_qty">Quantity</label>
-                <input id="editTxnQty" required min="0" step="0.01" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="number" />
+                <input id="editTxnQty" min="0" step="0.01" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="number" />
             </div>
             <div>
                 <label class="block text-sm font-semibold mb-1" data-i18n="col_date">Date</label>
-                <input id="editTxnDate" required class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="date" />
+                <input id="editTxnDate" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" type="date" />
             </div>
             <div>
                 <label class="block text-sm font-semibold mb-1" data-i18n="col_location">Location</label>
@@ -893,7 +941,7 @@
                 <textarea id="editTxnRemarks" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" rows="2"></textarea>
             </div>
             <div class="md:col-span-2 flex gap-3">
-                <button type="submit" class="bg-green-800 hover:bg-green-900 text-white px-6 py-2 rounded-lg font-semibold" data-i18n="btn_save_changes">Save Changes</button>
+                <button type="button" onclick="saveEditTransaction()" class="bg-green-800 hover:bg-green-900 text-white px-6 py-2 rounded-lg font-semibold" data-i18n="btn_save_changes">Save Changes</button>
                 <button type="button" onclick="closeEditTxnModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg font-semibold" data-i18n="btn_cancel">Cancel</button>
             </div>
         </form>
@@ -1072,46 +1120,102 @@ navButtons.forEach(btn => {
 });
 
 /* -----------------------------------------------------------------
-   ITEM FILE - create + list
+   ITEM FILE - create + edit + list
    ----------------------------------------------------------------- */
-document.getElementById('itemForm').addEventListener('submit', e => {
-    e.preventDefault();
-    const newItem = {
-        id: Date.now(),
-        name: document.getElementById('itemName').value.trim(),
-        category: document.getElementById('itemCategory').value,
-        unit: document.getElementById('itemUnit').value.trim(),
-        threshold: parseFloat(document.getElementById('itemThreshold').value) || 0
-    };
-    // Block duplicate names (case-insensitive)
-    if (items.some(i => i.name.toLowerCase() === newItem.name.toLowerCase())) {
-        alert('An item with that name already exists.');
-        return;
+// Track which item (if any) is being edited
+let editingItemId = null;
+
+function startEditItem(id) {
+    const it = items.find(i => String(i.id) === String(id));
+    if (!it) return;
+    document.getElementById('itemName').value       = it.name;
+    document.getElementById('itemCategory').value   = it.category;
+    document.getElementById('itemUnit').value       = it.unit;
+    document.getElementById('itemQtyPerUnit').value = it.qtyPerUnit || '';
+    document.getElementById('itemThreshold').value  = it.threshold || 0;
+    editingItemId = it.id;
+    document.getElementById('itemSubmitBtn').textContent = 'Update Item';
+    document.getElementById('itemCancelBtn').classList.remove('hidden');
+    document.getElementById('itemForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function cancelEditItem() {
+    editingItemId = null;
+    document.getElementById('itemName').value       = '';
+    document.getElementById('itemCategory').value   = '';
+    document.getElementById('itemUnit').value       = '';
+    document.getElementById('itemQtyPerUnit').value = '';
+    document.getElementById('itemThreshold').value  = '';
+    document.getElementById('itemSubmitBtn').textContent = 'Save Item';
+    document.getElementById('itemCancelBtn').classList.add('hidden');
+}
+
+function saveItem() {
+    const name       = document.getElementById('itemName').value.trim();
+    const category   = document.getElementById('itemCategory').value;
+    const unit       = document.getElementById('itemUnit').value.trim();
+    const qtyPerUnit = parseFloat(document.getElementById('itemQtyPerUnit').value) || 0;
+    const threshold  = parseFloat(document.getElementById('itemThreshold').value) || 0;
+
+    if (!name)     { alert('Please enter an Item Name.'); return; }
+    if (!category) { alert('Please select a Category.'); return; }
+    if (!unit)     { alert('Please enter a Unit.'); return; }
+    if (qtyPerUnit <= 0) { alert('Please enter a valid Qty / Unit (must be greater than 0).'); return; }
+
+    if (editingItemId) {
+        const idx = items.findIndex(i => String(i.id) === String(editingItemId));
+        if (idx < 0) { editingItemId = null; return; }
+        const oldName = items[idx].name;
+        if (items.some((i, j) => j !== idx && i.name.toLowerCase() === name.toLowerCase())) {
+            alert('Another item with that name already exists.'); return;
+        }
+        items[idx] = { ...items[idx], name, category, unit, qtyPerUnit, threshold };
+        if (oldName !== name) {
+            transactions.forEach(t => { if (t.itemName === oldName) t.itemName = name; });
+            save(STORAGE_KEYS.transactions, transactions);
+        }
+        save(STORAGE_KEYS.items, items);
+        cancelEditItem();
+    } else {
+        if (items.some(i => i.name.toLowerCase() === name.toLowerCase())) {
+            alert('An item with that name already exists.'); return;
+        }
+        items.push({ id: Date.now(), name, category, unit, qtyPerUnit, threshold });
+        save(STORAGE_KEYS.items, items);
+        document.getElementById('itemName').value       = '';
+        document.getElementById('itemCategory').value   = '';
+        document.getElementById('itemUnit').value       = '';
+        document.getElementById('itemQtyPerUnit').value = '';
+        document.getElementById('itemThreshold').value  = '';
     }
-    items.push(newItem);
-    save(STORAGE_KEYS.items, items);
-    e.target.reset();
     refreshAll();
-});
+}
 
 // Render existing items table
 function renderItemsTable() {
     const body = document.getElementById('itemsTableBody');
     body.innerHTML = '';
     if (items.length === 0) {
-        body.innerHTML = '<tr><td colspan="5" class="px-3 py-4 text-center text-gray-500">No items yet.</td></tr>';
+        body.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-center text-gray-500">No items yet.</td></tr>';
         return;
     }
     items.forEach(it => {
         const tr = document.createElement('tr');
         tr.className = 'border-b border-green-100 hover:bg-green-50';
+        const qtyLabel = it.qtyPerUnit
+            ? `${it.qtyPerUnit} / ${it.unit}`
+            : '<span class="text-gray-400">—</span>';
         tr.innerHTML = `
-            <td class="px-3 py-2">${it.name}</td>
+            <td class="px-3 py-2 font-medium">${it.name}</td>
             <td class="px-3 py-2">${it.category}</td>
             <td class="px-3 py-2">${it.unit}</td>
+            <td class="px-3 py-2 text-center">${qtyLabel}</td>
             <td class="px-3 py-2">${it.category === 'Chemical' ? it.threshold : '<span class="text-gray-400">N/A</span>'}</td>
-            <td class="px-3 py-2">
-                <button class="text-red-600 hover:underline" onclick="deleteItem(${it.id})">Delete</button>
+            <td class="px-3 py-2 flex gap-2 flex-wrap">
+                <button class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold px-3 py-1 rounded"
+                    onclick="startEditItem('${it.id}')">✏️ Edit</button>
+                <button class="text-xs bg-red-100 hover:bg-red-200 text-red-800 font-semibold px-3 py-1 rounded"
+                    onclick="deleteItem('${it.id}')">🗑 Delete</button>
             </td>`;
         body.appendChild(tr);
     });
@@ -1119,11 +1223,11 @@ function renderItemsTable() {
 
 // Delete an item (and any transactions linked to it)
 function deleteItem(id) {
-    const it = items.find(i => i.id === id);
+    const it = items.find(i => String(i.id) === String(id));
     if (!it) return;
     if (!confirm(`Delete item "${it.name}"? This will also remove its transactions.`)) return;
-    items = items.filter(i => i.id !== id);
-    transactions = transactions.filter(t => t.itemId !== id);
+    items        = items.filter(i => String(i.id) !== String(id));
+    transactions = transactions.filter(t => String(t.itemId) !== String(id));
     save(STORAGE_KEYS.items, items);
     save(STORAGE_KEYS.transactions, transactions);
     refreshAll();
@@ -1155,8 +1259,7 @@ function cancelEditLocation() {
 }
 document.getElementById('locCancelBtn').addEventListener('click', cancelEditLocation);
 
-document.getElementById('locForm').addEventListener('submit', e => {
-    e.preventDefault();
+function saveLocation() {
     const formLoc = {
         name: document.getElementById('locName').value.trim(),
         area: parseFloat(document.getElementById('locArea').value) || 0,
@@ -1187,11 +1290,11 @@ document.getElementById('locForm').addEventListener('submit', e => {
             return;
         }
         locations.push({ id: Date.now(), ...formLoc });
-        e.target.reset();
+        document.getElementById('locForm').reset();
     }
     save(STORAGE_KEYS.locations, locations);
     refreshAll();
-});
+}
 
 // Render location grid
 function renderLocationGrid() {
@@ -1255,10 +1358,10 @@ function addTxnRow() {
 }
 document.getElementById('txnAddRowBtn').addEventListener('click', addTxnRow);
 
-document.getElementById('txnForm').addEventListener('submit', e => {
-    e.preventDefault();
-    const itemId = parseInt(document.getElementById('txnItem').value, 10);
-    const item   = items.find(i => i.id === itemId);
+function saveTransaction() {
+    const e = { target: document.getElementById('txnForm') };
+    const itemIdRaw = document.getElementById('txnItem').value;
+    const item   = items.find(i => String(i.id) === String(itemIdRaw));
     if (!item) { alert('Please select a valid item.'); return; }
 
     const txnType  = document.getElementById('txnType').value;
@@ -1280,7 +1383,7 @@ document.getElementById('txnForm').addEventListener('submit', e => {
                 alert('Please select a Manuring Round for this fertilizer issue.');
                 return;
             }
-            const round = manuringRounds.find(r => r.id === parseInt(roundId, 10));
+            const round = manuringRounds.find(r => String(r.id) === String(roundId));
             if (round) {
                 manuringRoundId   = round.id;
                 manuringRoundName = round.name;
@@ -1324,7 +1427,7 @@ document.getElementById('txnForm').addEventListener('submit', e => {
             });
         });
         save(STORAGE_KEYS.transactions, transactions);
-        e.target.reset();
+        document.getElementById('txnForm').reset();
         document.getElementById('txnDate').valueAsDate = new Date();
         document.getElementById('txnRowsBody').innerHTML = '';
         document.getElementById('txnManuringWrap').classList.add('hidden');
@@ -1359,13 +1462,13 @@ document.getElementById('txnForm').addEventListener('submit', e => {
     };
     transactions.push(newTxn);
     save(STORAGE_KEYS.transactions, transactions);
-    e.target.reset();
+    document.getElementById('txnForm').reset();
     // re-default date to today after reset
     document.getElementById('txnDate').valueAsDate = new Date();
     document.getElementById('txnManuringWrap').classList.add('hidden');
     alert('Transaction recorded successfully.');
     refreshAll();
-});
+}
 
 /* -----------------------------------------------------------------
    TRANSACTION FORM - dynamic Manuring Round visibility
@@ -1373,9 +1476,9 @@ document.getElementById('txnForm').addEventListener('submit', e => {
    Filter rounds to those defined for the selected fertilizer.
    ----------------------------------------------------------------- */
 function updateManuringVisibility() {
-    const itemId  = parseInt(document.getElementById('txnItem').value, 10);
+    const itemIdRaw = document.getElementById('txnItem').value;
     const txnType = document.getElementById('txnType').value;
-    const item    = items.find(i => i.id === itemId);
+    const item    = items.find(i => String(i.id) === String(itemIdRaw));
     const wrap    = document.getElementById('txnManuringWrap');
     const sel     = document.getElementById('txnManuringRound');
 
@@ -1428,12 +1531,14 @@ document.getElementById('txnType').addEventListener('change', updateManuringVisi
 let editingRoundId = null;
 
 function startEditRound(id) {
-    const r = manuringRounds.find(x => x.id === id);
+    const r = manuringRounds.find(x => String(x.id) === String(id));
     if (!r) return;
-    document.getElementById('mrName').value = r.name;
-    document.getElementById('mrFertilizer').value = r.fertilizerItemId;
-    document.getElementById('mrKgPerPalm').value = r.kgPerPalm || 0;
-    document.getElementById('mrNotes').value = r.notes || '';
+    document.getElementById('mrName').value          = r.name;
+    document.getElementById('mrFertilizer').value    = String(r.fertilizerItemId);
+    document.getElementById('mrKgPerPalm').value     = r.kgPerPalm || 0;
+    document.getElementById('mrNotes').value         = r.notes || '';
+    // Restore checked blocks
+    renderMrBlocksGrid(r.blocks || []);
     editingRoundId = id;
     document.getElementById('mrSubmitBtn').textContent = 'Update Round';
     document.getElementById('mrCancelBtn').classList.remove('hidden');
@@ -1442,105 +1547,277 @@ function startEditRound(id) {
 
 function cancelEditRound() {
     editingRoundId = null;
-    document.getElementById('manuringForm').reset();
+    document.getElementById('mrName').value          = '';
+    document.getElementById('mrFertilizer').value    = '';
+    document.getElementById('mrKgPerPalm').value     = '';
+    document.getElementById('mrNotes').value         = '';
+    document.querySelectorAll('.mr-block-cb').forEach(cb => cb.checked = false);
     document.getElementById('mrSubmitBtn').textContent = 'Save Round';
     document.getElementById('mrCancelBtn').classList.add('hidden');
 }
 document.getElementById('mrCancelBtn').addEventListener('click', cancelEditRound);
 
-// Save / update round
-document.getElementById('manuringForm').addEventListener('submit', e => {
-    e.preventDefault();
-    const fertId = parseInt(document.getElementById('mrFertilizer').value, 10);
-    const fert   = items.find(i => i.id === fertId);
-    if (!fert) { alert('Please select a fertilizer.'); return; }
+// Save / update round — called directly by the button onclick
+function saveManuringRound() {
 
+    const roundName  = document.getElementById('mrName').value.trim();
+    const kgPerPalm  = document.getElementById('mrKgPerPalm').value;
+    const notes      = document.getElementById('mrNotes').value.trim();
+    const fertIdRaw  = document.getElementById('mrFertilizer').value;
+    const blocks     = [...document.querySelectorAll('.mr-block-cb:checked')].map(cb => cb.value);
+
+    // ── Validation ──────────────────────────────────────────────────
+    if (!roundName) {
+        alert('Please enter a Round Name.'); return;
+    }
+    if (!fertIdRaw) {
+        const hasFerts = items.filter(i => i.category === 'Fertilizer').length > 0;
+        alert(hasFerts
+            ? 'Please select a Fertilizer.'
+            : 'No Fertilizer items found. Please add one in Item File first.');
+        return;
+    }
+
+    if (blocks.length === 0 && locations.length > 0) {
+        if (!confirm('No blocks selected. Budget will use all registered blocks. Continue?')) return;
+    }
+
+    const fert = items.find(i => String(i.id) === String(fertIdRaw));
+    if (!fert) {
+        alert('Selected fertilizer not found. Please re-select.'); return;
+    }
+
+    // ── Build round object ───────────────────────────────────────────
     const formRound = {
-        name: document.getElementById('mrName').value.trim(),
+        name:             roundName,
         fertilizerItemId: fert.id,
-        fertilizerName: fert.name,
-        unit: fert.unit,
-        kgPerPalm: parseFloat(document.getElementById('mrKgPerPalm').value) || 0,
-        notes: document.getElementById('mrNotes').value.trim()
+        fertilizerName:   fert.name,
+        unit:             fert.unit,
+        kgPerPalm:        parseFloat(kgPerPalm) || 0,
+        blocks:           blocks,
+        notes:            notes
     };
 
+    // ── Create or update ─────────────────────────────────────────────
     if (editingRoundId) {
-        // ===== UPDATE EXISTING =====
-        const idx = manuringRounds.findIndex(x => x.id === editingRoundId);
+        const idx = manuringRounds.findIndex(x => String(x.id) === String(editingRoundId));
         if (idx < 0) { editingRoundId = null; return; }
         const oldName = manuringRounds[idx].name;
-        manuringRounds[idx] = { id: editingRoundId, ...formRound };
-        // Propagate updated round name to past transactions
+        manuringRounds[idx] = { id: manuringRounds[idx].id, ...formRound };
         if (oldName !== formRound.name) {
             transactions.forEach(t => {
-                if (t.manuringRoundId === editingRoundId) t.manuringRoundName = formRound.name;
+                if (String(t.manuringRoundId) === String(editingRoundId))
+                    t.manuringRoundName = formRound.name;
             });
             save(STORAGE_KEYS.transactions, transactions);
         }
         cancelEditRound();
     } else {
-        // ===== CREATE NEW (existing logic) =====
         manuringRounds.push({ id: Date.now(), ...formRound });
-        e.target.reset();
+        // Clear form fields
+        document.getElementById('mrName').value       = '';
+        document.getElementById('mrKgPerPalm').value  = '';
+        document.getElementById('mrNotes').value      = '';
+        document.getElementById('mrFertilizer').value = '';
+        document.querySelectorAll('.mr-block-cb').forEach(cb => cb.checked = false);
     }
-    save(STORAGE_KEYS.manuringRounds, manuringRounds);
-    refreshAll();
-});
 
-// Total palms across every registered block (used for budget calc)
+    // ── Persist & update UI directly ─────────────────────────────────
+    save(STORAGE_KEYS.manuringRounds, manuringRounds);
+
+    // Directly re-render the rounds table so it updates immediately
+    // without relying on refreshAll which may be suppressed or race
+    renderManuringRounds();
+    renderRoundProgress();
+
+    // Show success feedback inline (no alert needed)
+    const btn = document.getElementById('mrSubmitBtn');
+    const orig = btn.textContent;
+    btn.textContent = '✅ Saved!';
+    btn.style.background = '#15803d';
+    setTimeout(() => {
+        btn.textContent = orig;
+        btn.style.background = '';
+    }, 1500);
+}
+
+// Total palms across every registered block (used for budget calc when no blocks specified)
 function getTotalPalms() {
     return locations.reduce((s, l) => s + (parseInt(l.numPalms, 10) || 0), 0);
 }
 
-// Budgeted Fertilizer Needed = (Total Palms × kg per palm) ÷ 50 kg/bag
+// Palms for a specific set of block names
+function getPalmsForBlocks(blockNames) {
+    if (!blockNames || blockNames.length === 0) return getTotalPalms();
+    return locations
+        .filter(l => blockNames.includes(l.name))
+        .reduce((s, l) => s + (parseInt(l.numPalms, 10) || 0), 0);
+}
+
+// Budgeted Fertilizer Needed = (Selected Blocks' Palms × kg per palm) ÷ 50 kg/bag
 function calcRoundBudget(round) {
-    const kg = parseFloat(round.kgPerPalm) || 0;
-    return (getTotalPalms() * kg) / 50;
+    const kg    = parseFloat(round.kgPerPalm) || 0;
+    const palms = round.blocks && round.blocks.length > 0
+        ? getPalmsForBlocks(round.blocks)
+        : getTotalPalms();
+    return (palms * kg) / 50;
+}
+
+// Render the block checkboxes inside the manuring form
+function renderMrBlocksGrid(checkedBlocks) {
+    const grid = document.getElementById('mrBlocksGrid');
+    if (!grid) return;
+    if (locations.length === 0) {
+        grid.innerHTML = '<p class="text-xs text-gray-400 col-span-full italic">No blocks registered yet. Add blocks in Location Area first.</p>';
+        return;
+    }
+    grid.innerHTML = locations.map(l => `
+        <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
+            <input type="checkbox" class="mr-block-cb accent-green-700 w-4 h-4"
+                value="${l.name}"
+                ${checkedBlocks && checkedBlocks.includes(l.name) ? 'checked' : ''} />
+            <span>${l.name}</span>
+            <span class="text-xs text-gray-400">(${l.numPalms || 0} palms)</span>
+        </label>`).join('');
+}
+
+// Select / deselect all block checkboxes in the manuring form
+function mrSelectAllBlocks(check) {
+    document.querySelectorAll('.mr-block-cb').forEach(cb => cb.checked = check);
 }
 
 // Total qty applied for a round across ALL blocks (used by % Applied)
 function calcRoundTotalApplied(roundId) {
     return transactions
-        .filter(t => t.manuringRoundId === roundId && t.type === 'Out')
+        .filter(t => String(t.manuringRoundId) === String(roundId) && t.type === 'Out')
         .reduce((s, t) => s + (parseFloat(t.qty) || 0), 0);
 }
 
-// Render the rounds master table
+// Toggle the transaction sub-row for a round
+function toggleRoundTxns(roundId) {
+    const row = document.getElementById(`txn-sub-${roundId}`);
+    const btn = document.getElementById(`txn-toggle-${roundId}`);
+    if (!row) return;
+    const hidden = row.style.display === 'none' || row.style.display === '';
+    row.style.display = hidden ? 'table-row' : 'none';
+    if (btn) btn.textContent = hidden ? '▲ Hide' : '▼ Show';
+}
+
+// Render the rounds master table with collapsible transaction sub-rows
 function renderManuringRounds() {
     const body = document.getElementById('manuringRoundsBody');
     body.innerHTML = '';
     if (manuringRounds.length === 0) {
-        body.innerHTML = '<tr><td colspan="5" class="px-3 py-4 text-center text-gray-500">No manuring rounds defined yet.</td></tr>';
+        body.innerHTML = '<tr><td colspan="7" class="px-3 py-4 text-center text-gray-500">No manuring rounds defined yet.</td></tr>';
         return;
     }
+
     manuringRounds.forEach(r => {
-        const tr = document.createElement('tr');
-        tr.className = 'border-b border-green-100 hover:bg-green-50';
-        const budget = calcRoundBudget(r);
-        const kgLabel = `<span class="text-xs text-gray-500">(${(r.kgPerPalm || 0)} kg/palm × ${getTotalPalms().toLocaleString()} palms ÷ 50 kg/bag)</span>`;
-        tr.innerHTML = `
+        const budget         = calcRoundBudget(r);
+        const selectedBlocks = r.blocks && r.blocks.length > 0 ? r.blocks : ['All blocks'];
+        const blocksHtml     = selectedBlocks.map(b =>
+            `<span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full mr-1 mb-1">${b}</span>`
+        ).join('');
+        const palmsUsed = r.blocks && r.blocks.length > 0
+            ? getPalmsForBlocks(r.blocks).toLocaleString()
+            : getTotalPalms().toLocaleString();
+        const kgLabel = `<span class="text-xs text-gray-400">(${r.kgPerPalm || 0} kg/palm × ${palmsUsed} palms ÷ 50)</span>`;
+
+        // Transactions linked to this round
+        const roundTxns = transactions
+            .filter(t => String(t.manuringRoundId) === String(r.id) && t.type === 'Out')
+            .sort((a, b) => a.date.localeCompare(b.date));
+        const txnCount  = roundTxns.length;
+        const applied   = roundTxns.reduce((s, t) => s + (parseFloat(t.qty) || 0), 0);
+
+        // Transactions toggle button label
+        const toggleLabel = txnCount > 0
+            ? `▼ Show (${txnCount})`
+            : `▼ Show (0)`;
+
+        // ── Main round row ──
+        const mainRow    = document.createElement('tr');
+        mainRow.className = 'border-b border-green-200 hover:bg-green-50';
+        mainRow.innerHTML = `
             <td class="px-3 py-2 font-semibold">🌱 ${r.name}</td>
-            <td class="px-3 py-2">${r.fertilizerName}</td>
-            <td class="px-3 py-2 text-right"><b>${budget.toFixed(2)}</b> bags (50 kg/bag)<br/>${kgLabel}</td>
-            <td class="px-3 py-2 text-gray-600 italic">${r.notes || '-'}</td>
-            <td class="px-3 py-2 space-x-3">
-                <button class="text-green-700 hover:underline" onclick="startEditRound(${r.id})">Edit</button>
-                <button class="text-red-600 hover:underline" onclick="deleteRound(${r.id})">Delete</button>
+            <td class="px-3 py-2">${r.fertilizerName || '-'}</td>
+            <td class="px-3 py-2">${blocksHtml}</td>
+            <td class="px-3 py-2 text-right">
+                <b>${budget.toFixed(2)}</b> bags<br/>${kgLabel}
+            </td>
+            <td class="px-3 py-2 text-gray-600 italic text-sm">${r.notes || '-'}</td>
+            <td class="px-3 py-2 whitespace-nowrap">
+                <button id="txn-toggle-${r.id}"
+                    class="text-xs ${txnCount > 0 ? 'bg-green-100 hover:bg-green-200 text-green-800' : 'bg-gray-100 text-gray-400'} font-semibold px-3 py-1 rounded"
+                    onclick="toggleRoundTxns('${r.id}')">
+                    ${toggleLabel}
+                </button>
+            </td>
+            <td class="px-3 py-2 space-x-2 whitespace-nowrap">
+                <button class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold px-3 py-1 rounded"
+                    onclick="startEditRound('${r.id}')">✏️ Edit</button>
+                <button class="text-xs bg-red-100 hover:bg-red-200 text-red-800 font-semibold px-3 py-1 rounded"
+                    onclick="deleteRound('${r.id}')">🗑 Delete</button>
             </td>`;
-        body.appendChild(tr);
+        body.appendChild(mainRow);
+
+        // ── Transaction sub-row (hidden by default) ──
+        const subRow  = document.createElement('tr');
+        subRow.id     = `txn-sub-${r.id}`;
+        subRow.style.display = 'none';
+
+        let subContent = '';
+        if (txnCount === 0) {
+            subContent = `<td colspan="7" style="padding:8px 32px 12px;">
+                <p class="text-xs text-gray-400 italic">No transactions recorded for this round yet.</p>
+            </td>`;
+        } else {
+            const txnRows = roundTxns.map(t => `
+                <tr style="border-bottom:1px solid #d1fae5;">
+                    <td class="px-3 py-1.5 text-xs">${t.date}</td>
+                    <td class="px-3 py-1.5 text-xs font-medium text-green-700">${t.location || '-'}</td>
+                    <td class="px-3 py-1.5 text-xs text-right font-semibold">${parseFloat(t.qty).toFixed(2)}</td>
+                    <td class="px-3 py-1.5 text-xs text-gray-500">${t.ref || '-'}</td>
+                    <td class="px-3 py-1.5 text-xs text-gray-400">${t.remarks || '-'}</td>
+                </tr>`).join('');
+
+            subContent = `<td colspan="7" style="padding:0 0 12px 32px; background:#f0fdf4;">
+                <table style="width:100%;border-collapse:collapse;font-size:0.78rem;">
+                    <thead>
+                        <tr style="background:#dcfce7;color:#166534;">
+                            <th class="px-3 py-1.5 text-left">Date</th>
+                            <th class="px-3 py-1.5 text-left">Block / Location</th>
+                            <th class="px-3 py-1.5 text-right">Qty Applied (bags)</th>
+                            <th class="px-3 py-1.5 text-left">Ref / DO</th>
+                            <th class="px-3 py-1.5 text-left">Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>${txnRows}</tbody>
+                    <tfoot>
+                        <tr style="background:#f0fdf4;border-top:2px solid #86efac;">
+                            <td class="px-3 py-1.5 text-xs font-bold" colspan="2">Total Applied</td>
+                            <td class="px-3 py-1.5 text-xs font-bold text-right text-green-700">${applied.toFixed(2)} bags</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </td>`;
+        }
+
+        subRow.innerHTML = subContent;
+        body.appendChild(subRow);
     });
 }
 
 function deleteRound(id) {
-    const r = manuringRounds.find(x => x.id === id);
+    const r = manuringRounds.find(x => String(x.id) === String(id));
     if (!r) return;
-    // Check if any transactions reference this round
-    const linked = transactions.filter(t => t.manuringRoundId === id).length;
+    const linked = transactions.filter(t => String(t.manuringRoundId) === String(id)).length;
     const msg = linked > 0
         ? `Delete round "${r.name}"?\n${linked} transaction(s) reference this round - they will keep the round name as text but lose the link.`
         : `Delete round "${r.name}"?`;
     if (!confirm(msg)) return;
-    manuringRounds = manuringRounds.filter(x => x.id !== id);
+    manuringRounds = manuringRounds.filter(x => String(x.id) !== String(id));
     save(STORAGE_KEYS.manuringRounds, manuringRounds);
     refreshAll();
 }
@@ -1603,18 +1880,20 @@ function renderRoundProgress() {
    DROPDOWN POPULATORS - run whenever master data changes
    ----------------------------------------------------------------- */
 function populateItemDropdowns() {
-    // Transaction page: reset category first, then show all items
-    document.getElementById('txnCategory').value = '';
+    // Transaction page: rebuild item list preserving current category selection
     filterTxnItemsByCategory();
 
     // Stock summary filter dropdown — populate via shared filter function
     filterSummaryItemsByCategory();
 
-    // Manuring program: only Fertilizer items
-    const mrSel = document.getElementById('mrFertilizer');
+    // Manuring program: only Fertilizer items — preserve current selection
+    const mrSel       = document.getElementById('mrFertilizer');
+    const mrPrevVal   = mrSel.value;
     const fertilizers = items.filter(i => i.category === 'Fertilizer');
-    mrSel.innerHTML = '<option value="">-- Select Fertilizer --</option>' +
-        fertilizers.map(i => `<option value="${i.id}">${i.name} (${i.unit})</option>`).join('');
+    mrSel.innerHTML   = '<option value="">-- Select Fertilizer --</option>' +
+        fertilizers.map(i => `<option value="${String(i.id)}">${i.name} (${i.unit})</option>`).join('');
+    // Restore previously selected value if it still exists
+    if (mrPrevVal) mrSel.value = mrPrevVal;
 }
 
 /**
@@ -1625,6 +1904,7 @@ function populateItemDropdowns() {
 function filterTxnItemsByCategory() {
     const selectedCat = document.getElementById('txnCategory').value;
     const txnSel      = document.getElementById('txnItem');
+    const prevVal     = txnSel.value; // preserve current selection
 
     // Filter items — show all if no category chosen
     const filtered = selectedCat
@@ -1634,8 +1914,10 @@ function filterTxnItemsByCategory() {
     txnSel.innerHTML = '<option value="">-- Select Item --</option>' +
         filtered.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
 
-    // Reset item selection whenever category changes
-    txnSel.value = '';
+    // Restore previous selection if it still exists in the filtered list
+    if (prevVal && filtered.some(i => String(i.id) === String(prevVal))) {
+        txnSel.value = prevVal;
+    }
     // Re-evaluate conditional UI (manuring round picker, etc.)
     updateManuringVisibility();
 }
@@ -2038,6 +2320,7 @@ function refreshAll() {
     populateLocationDropdowns();
     renderItemsTable();
     renderLocationGrid();
+    renderMrBlocksGrid();   // keep block checkboxes in sync with registered locations
     renderLiveStock();
     renderLiveStockChart();
     renderSummary();
@@ -2102,8 +2385,7 @@ function closeEditTxnModal() {
 // Re-evaluate manuring wrap when type changes inside the edit modal
 document.getElementById('editTxnType').addEventListener('change', () => toggleEditManuringWrap(null));
 
-document.getElementById('editTxnForm').addEventListener('submit', e => {
-    e.preventDefault();
+function saveEditTransaction() {
     const id  = parseInt(document.getElementById('editTxnId').value, 10);
     const idx = transactions.findIndex(x => x.id === id);
     if (idx < 0) { closeEditTxnModal(); return; }
@@ -2137,7 +2419,7 @@ document.getElementById('editTxnForm').addEventListener('submit', e => {
     closeEditTxnModal();
     alert('Transaction updated successfully.');
     refreshAll();
-});
+}
 
 // Close modal when clicking the backdrop
 document.getElementById('editTxnModal').addEventListener('click', e => {
@@ -2634,6 +2916,13 @@ function bootApp(session) {
     // Set the active estate globally — all data reads/writes use this
     activeEstate = session.estate || '';
 
+    // Show blank state if no estate selected yet; hide it once one is chosen
+    if (activeEstate) {
+        hideEstateBlankState();
+    } else {
+        showEstateBlankState();
+    }
+
     // Load cached data for this estate from localStorage immediately
     if (activeEstate) loadEstateData(activeEstate);
 
@@ -2738,7 +3027,13 @@ function onSidebarEstateChange() {
     const session = loadSession();
     if (!session) return;
     const newEstate = document.getElementById('sidebarEstate').value;
-    if (!newEstate) return;
+    if (!newEstate) {
+        showEstateBlankState();
+        return;
+    }
+
+    // Hide blank state — estate is now selected
+    hideEstateBlankState();
 
     // Update active estate globally
     activeEstate    = newEstate;
@@ -3008,6 +3303,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+/* -----------------------------------------------------------------
+   ESTATE BLANK STATE
+   Shows a centred overlay on the right panel when no estate is
+   selected. Hides it once the user picks an estate from the sidebar.
+   ----------------------------------------------------------------- */
+function showEstateBlankState() {
+    const el = document.getElementById('estateBlankState');
+    if (el) el.style.display = 'flex';
+    const mc = document.getElementById('mainContent');
+    if (mc) mc.style.visibility = 'hidden';
+}
+
+function hideEstateBlankState() {
+    const el = document.getElementById('estateBlankState');
+    if (el) el.style.display = 'none';
+    const mc = document.getElementById('mainContent');
+    if (mc) mc.style.visibility = 'visible';
+}
 </script>
 </body>
 </html>
