@@ -272,7 +272,6 @@
             <button data-target="manuring"     class="nav-item w-full text-left px-4 py-2 rounded-lg font-medium" data-i18n="nav_manuring">🌱 Manuring Program</button>
             <button data-target="roundprogress" class="nav-item w-full text-left px-4 py-2 rounded-lg font-medium" data-i18n="nav_roundprogress">📈 Manuring Progress</button>
             <button data-target="fieldmaint"   class="nav-item w-full text-left px-4 py-2 rounded-lg font-medium">🔧 Maintenance Program</button>
-            <button data-target="maintprogress" class="nav-item w-full text-left px-4 py-2 rounded-lg font-medium">📊 Maint. Progress & Chemical</button>
             <!-- Super Admin only nav item — shown/hidden by auth JS -->
             <button data-target="useradmin" id="navUserAdmin"
                 class="nav-item w-full text-left px-4 py-2 rounded-lg font-medium hidden">
@@ -895,191 +894,7 @@
             </div>
         </section>
 
-        <!-- ============ PAGE 10: MAINTENANCE PROGRESS & CHEMICAL USAGE ============ -->
-        <section id="maintprogress" class="page-section">
-            <h2 class="text-3xl font-bold mb-2">📊 Maintenance Progress &amp; Chemical Usage</h2>
-            <p class="text-sm text-green-700 mb-6">Record claimed maintenance area per block/round, set chemical ingredient dosage rates, and view progress &amp; chemical usage per HA.</p>
-
-            <!-- ── Claim Entry Form ── -->
-            <div class="bg-white p-6 rounded-xl shadow mb-6">
-                <h3 class="text-xl font-bold mb-4">➕ Add Maintenance Claim</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-semibold mb-1">Maintenance Round <span class="text-red-500">*</span></label>
-                        <select id="mpRound" class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
-                            <option value="">-- Select Round --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-1">Block <span class="text-red-500">*</span></label>
-                        <select id="mpBlock" class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
-                            <option value="">-- Select Block --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-1">Claimed Maintenance Area (Ha) <span class="text-red-500">*</span></label>
-                        <input id="mpClaimedArea" type="number" min="0" step="0.01" placeholder="e.g. 12.5"
-                            class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-1">Month of Claim <span class="text-red-500">*</span></label>
-                        <input id="mpMonth" type="month"
-                            class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" />
-                    </div>
-                    <div class="flex items-end">
-                        <button type="button" onclick="saveMaintClaim()"
-                            class="bg-green-800 hover:bg-green-900 text-white px-6 py-2 rounded-lg font-semibold w-full">
-                            Save Claim
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ── Chemical Ingredient Setup ── -->
-            <div class="bg-white p-6 rounded-xl shadow mb-6">
-                <h3 class="text-xl font-bold mb-4">🧪 Chemical Ingredient Setup</h3>
-                <p class="text-xs text-green-700 mb-4">Define active ingredients and link them to chemical items. Set the maximum dosage rate per HA for monitoring over-application.</p>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                        <label class="block text-sm font-semibold mb-1">Ingredient Name <span class="text-red-500">*</span></label>
-                        <input id="ciName" type="text" placeholder="e.g. Glyphosate"
-                            class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-1">Linked Chemical Item <span class="text-red-500">*</span></label>
-                        <select id="ciItem" class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
-                            <option value="">-- Select Chemical --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-1">Unit</label>
-                        <select id="ciUnit" class="w-full border border-green-300 rounded p-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-600">
-                            <option value="litre">Litre / Ha</option>
-                            <option value="gram">Gram / Ha</option>
-                            <option value="ml">ml / Ha</option>
-                            <option value="kg">kg / Ha</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-1">Max Dosage Rate <span class="text-red-500">*</span></label>
-                        <input id="ciMaxDosage" type="number" min="0" step="0.001" placeholder="e.g. 3.0"
-                            class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" />
-                    </div>
-                </div>
-                <button type="button" onclick="saveChemIngredient()"
-                    class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2 rounded-lg font-semibold">
-                    Save Ingredient
-                </button>
-                <!-- Ingredient list -->
-                <div class="overflow-x-auto mt-4">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-blue-50 text-blue-800">
-                            <tr>
-                                <th class="px-3 py-2 text-left">Ingredient</th>
-                                <th class="px-3 py-2 text-left">Linked Chemical</th>
-                                <th class="px-3 py-2 text-left">Unit</th>
-                                <th class="px-3 py-2 text-right">Max Dosage / Ha</th>
-                                <th class="px-3 py-2 text-left">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ciTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- ── a) Maintenance Progress by Round ── -->
-            <div class="bg-white p-6 rounded-xl shadow mb-6">
-                <h3 class="text-xl font-bold mb-2">a) Maintenance Progress by Round</h3>
-                <p class="text-xs text-green-700 mb-4">% Progress = Total Claimed Area ÷ Total Block Area of selected blocks in the round</p>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-green-100 text-green-800">
-                            <tr>
-                                <th class="px-3 py-2 text-left">Round</th>
-                                <th class="px-3 py-2 text-left">Month</th>
-                                <th class="px-3 py-2 text-right">Total Block Area (Ha)</th>
-                                <th class="px-3 py-2 text-right">Total Claimed (Ha)</th>
-                                <th class="px-3 py-2 text-right">% Progress</th>
-                            </tr>
-                        </thead>
-                        <tbody id="mpByRoundBody"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- ── b) Maintenance Progress by Block ── -->
-            <div class="bg-white p-6 rounded-xl shadow mb-6">
-                <h3 class="text-xl font-bold mb-2">b) Maintenance Progress by Block</h3>
-                <p class="text-xs text-green-700 mb-4">% Progress = Claimed Area ÷ Block Area × 100</p>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-green-100 text-green-800">
-                            <tr>
-                                <th class="px-3 py-2 text-left">Round</th>
-                                <th class="px-3 py-2 text-left">Block</th>
-                                <th class="px-3 py-2 text-left">Month</th>
-                                <th class="px-3 py-2 text-right">Block Area (Ha)</th>
-                                <th class="px-3 py-2 text-right">Claimed Area (Ha)</th>
-                                <th class="px-3 py-2 text-right">% Progress</th>
-                                <th class="px-3 py-2 text-left">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="mpByBlockBody"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- ── c) Chemical Usage per HA by Round ── -->
-            <div class="bg-white p-6 rounded-xl shadow mb-6">
-                <h3 class="text-xl font-bold mb-2">c) Chemical Usage per HA by Round</h3>
-                <p class="text-xs text-green-700 mb-4">Usage / Ha = Total Qty Used ÷ Total Claimed Area (Ha). Highlighted red if exceeding max dosage.</p>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-orange-100 text-orange-800">
-                            <tr>
-                                <th class="px-3 py-2 text-left">Round</th>
-                                <th class="px-3 py-2 text-left">Month</th>
-                                <th class="px-3 py-2 text-left">Ingredient</th>
-                                <th class="px-3 py-2 text-left">Chemical Item</th>
-                                <th class="px-3 py-2 text-right">Total Qty Used</th>
-                                <th class="px-3 py-2 text-right">Claimed Area (Ha)</th>
-                                <th class="px-3 py-2 text-right">Usage / Ha</th>
-                                <th class="px-3 py-2 text-right">Max Dosage / Ha</th>
-                                <th class="px-3 py-2 text-left">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="chemByRoundBody"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- ── d) Chemical Usage per HA by Block ── -->
-            <div class="bg-white p-6 rounded-xl shadow">
-                <h3 class="text-xl font-bold mb-2">d) Chemical Usage per HA by Block</h3>
-                <p class="text-xs text-green-700 mb-4">Usage / Ha = Total Qty Used (that block) ÷ Claimed Area (Ha) for that block. Highlighted red if exceeding max dosage.</p>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-orange-100 text-orange-800">
-                            <tr>
-                                <th class="px-3 py-2 text-left">Round</th>
-                                <th class="px-3 py-2 text-left">Block</th>
-                                <th class="px-3 py-2 text-left">Month</th>
-                                <th class="px-3 py-2 text-left">Ingredient</th>
-                                <th class="px-3 py-2 text-left">Chemical Item</th>
-                                <th class="px-3 py-2 text-right">Total Qty Used</th>
-                                <th class="px-3 py-2 text-right">Claimed Area (Ha)</th>
-                                <th class="px-3 py-2 text-right">Usage / Ha</th>
-                                <th class="px-3 py-2 text-right">Max Dosage / Ha</th>
-                                <th class="px-3 py-2 text-left">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="chemByBlockBody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- ============ PAGE 11: USER MANAGEMENT (Super Admin only) ============ -->
+        <!-- ============ PAGE 10: USER MANAGEMENT (Super Admin only) ============ -->
         <section id="useradmin" class="page-section">
             <h2 class="text-3xl font-bold mb-2">👤 User Management</h2>
             <p class="text-sm text-green-700 mb-6">Register normal users, assign their estate, and control which sections they can access.</p>
@@ -1249,8 +1064,6 @@ function getEstateKeys(estate) {
         transactions:     `opp_transactions::${e}`,
         manuringRounds:   `opp_manuring_rounds::${e}`,
         fieldMaintRounds: `opp_fieldmaint_rounds::${e}`,
-        maintClaims:      `opp_maint_claims::${e}`,
-        chemIngredients:  `opp_chem_ingredients::${e}`,
     };
 }
 
@@ -1260,9 +1073,7 @@ const STORAGE_KEYS = {
     locations:        'opp_locations',
     transactions:     'opp_transactions',
     manuringRounds:   'opp_manuring_rounds',
-    fieldMaintRounds: 'opp_fieldmaint_rounds',
-    maintClaims:      'opp_maint_claims',
-    chemIngredients:  'opp_chem_ingredients'
+    fieldMaintRounds: 'opp_fieldmaint_rounds'
 };
 
 // In-memory arrays — always reflect the ACTIVE estate's data
@@ -1271,8 +1082,6 @@ let locations        = [];
 let transactions     = [];
 let manuringRounds   = [];
 let fieldMaintRounds = [];
-let maintClaims      = []; // { id, roundId, roundName, blockName, claimedArea, month }
-let chemIngredients  = []; // { id, name, itemId, itemName, unit, maxDosage }
 
 // Snapshot of last-known ids per estate+table for Supabase delete sync
 const lastKnownIds = {
@@ -1280,9 +1089,7 @@ const lastKnownIds = {
     opp_locations:          new Set(),
     opp_transactions:       new Set(),
     opp_manuring_rounds:    new Set(),
-    opp_fieldmaint_rounds:  new Set(),
-    opp_maint_claims:       new Set(),
-    opp_chem_ingredients:   new Set()
+    opp_fieldmaint_rounds:  new Set()
 };
 
 /**
@@ -1296,16 +1103,12 @@ function loadEstateData(estate) {
     transactions     = JSON.parse(localStorage.getItem(keys.transactions))     || [];
     manuringRounds   = JSON.parse(localStorage.getItem(keys.manuringRounds))   || [];
     fieldMaintRounds = JSON.parse(localStorage.getItem(keys.fieldMaintRounds)) || [];
-    maintClaims      = JSON.parse(localStorage.getItem(keys.maintClaims))      || [];
-    chemIngredients  = JSON.parse(localStorage.getItem(keys.chemIngredients))  || [];
     // Refresh id snapshots
     lastKnownIds.opp_items              = new Set(items.map(r => r.id));
     lastKnownIds.opp_locations          = new Set(locations.map(r => r.id));
     lastKnownIds.opp_transactions       = new Set(transactions.map(r => r.id));
     lastKnownIds.opp_manuring_rounds    = new Set(manuringRounds.map(r => r.id));
     lastKnownIds.opp_fieldmaint_rounds  = new Set(fieldMaintRounds.map(r => r.id));
-    lastKnownIds.opp_maint_claims       = new Set(maintClaims.map(r => r.id));
-    lastKnownIds.opp_chem_ingredients   = new Set(chemIngredients.map(r => r.id));
 }
 
 // Persist a key back to localStorage AND sync to Supabase.
@@ -2847,8 +2650,8 @@ function refreshAll() {
     populateLocationDropdowns();
     renderItemsTable();
     renderLocationGrid();
-    renderMrBlocksGrid();
-    renderFmBlocksGrid();
+    renderMrBlocksGrid();       // keep manuring block checkboxes in sync
+    renderFmBlocksGrid();       // keep field maintenance block checkboxes in sync
     renderLiveStock();
     renderLiveStockChart();
     renderSummary();
@@ -2856,11 +2659,8 @@ function refreshAll() {
     renderManuringRounds();
     renderManuringHistory();
     renderRoundProgress();
-    renderFieldMaintRounds();
-    renderMaintProgressDropdowns(); // populate mpRound, mpBlock, ciItem
-    renderCiTable();
-    renderMaintProgressTables();    // all 4 progress/usage tables
-    updateManuringVisibility();
+    renderFieldMaintRounds();   // field maintenance rounds table
+    updateManuringVisibility(); // re-evaluate the conditional round picker
 }
 
 /* -----------------------------------------------------------------
@@ -3348,14 +3148,13 @@ const AUTH_KEYS = {
 // All navigable sections (excluding dashboard which is always visible,
 // and useradmin which is super-admin-only)
 const ALL_SECTIONS = [
-    { id: 'items',          label: '📦 Item File' },
-    { id: 'transactions',   label: '🔄 Stock Transaction' },
-    { id: 'summary',        label: '📑 Stock Summary' },
-    { id: 'locations',      label: '📍 Location Area' },
-    { id: 'manuring',       label: '🌱 Manuring Program' },
-    { id: 'roundprogress',  label: '📈 Manuring Progress' },
-    { id: 'fieldmaint',     label: '🔧 Maintenance Program' },
-    { id: 'maintprogress',  label: '📊 Maint. Progress & Chemical' },
+    { id: 'items',        label: '📦 Item File' },
+    { id: 'transactions', label: '🔄 Stock Transaction' },
+    { id: 'summary',      label: '📑 Stock Summary' },
+    { id: 'locations',    label: '📍 Location Area' },
+    { id: 'manuring',     label: '🌱 Manuring Program' },
+    { id: 'roundprogress',label: '📈 Manuring Progress' },
+    { id: 'fieldmaint',   label: '🔧 Maintenance Program' },
 ];
 
 // Super Admin credentials (hardcoded — cannot be changed by users)
@@ -4048,363 +3847,6 @@ function renderFieldMaintRounds() {
             </td>`;
         body.appendChild(tr);
     });
-}
-/* =================================================================
-   MAINTENANCE PROGRESS & CHEMICAL USAGE
-   All functions purely additive — no existing code touched.
-   ================================================================= */
-
-/** Populate dropdowns on the Maintenance Progress page */
-function renderMaintProgressDropdowns() {
-    // Maintenance round dropdown
-    const mpRoundSel = document.getElementById('mpRound');
-    if (!mpRoundSel) return;
-    const prevRound = mpRoundSel.value;
-    mpRoundSel.innerHTML = '<option value="">-- Select Round --</option>' +
-        fieldMaintRounds.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-    if (prevRound) mpRoundSel.value = prevRound;
-
-    // Block dropdown — populated from Location Area
-    const mpBlockSel = document.getElementById('mpBlock');
-    if (!mpBlockSel) return;
-    const prevBlock = mpBlockSel.value;
-    mpBlockSel.innerHTML = '<option value="">-- Select Block --</option>' +
-        locations.map(l => `<option value="${l.name}">${l.name}</option>`).join('');
-    if (prevBlock) mpBlockSel.value = prevBlock;
-
-    // Chemical item dropdown (for ingredient setup)
-    const ciItemSel = document.getElementById('ciItem');
-    if (!ciItemSel) return;
-    const prevCi = ciItemSel.value;
-    ciItemSel.innerHTML = '<option value="">-- Select Chemical --</option>' +
-        items.filter(i => i.category === 'Chemical')
-             .map(i => `<option value="${i.id}">${i.name}</option>`).join('');
-    if (prevCi) ciItemSel.value = prevCi;
-}
-
-/** Save a new maintenance area claim */
-function saveMaintClaim() {
-    const roundId     = document.getElementById('mpRound').value;
-    const blockName   = document.getElementById('mpBlock').value;
-    const claimedArea = parseFloat(document.getElementById('mpClaimedArea').value);
-    const month       = document.getElementById('mpMonth').value;
-
-    if (!roundId)           { alert('Please select a Maintenance Round.'); return; }
-    if (!blockName)         { alert('Please select a Block.'); return; }
-    if (!claimedArea || claimedArea <= 0) { alert('Please enter a valid Claimed Area (> 0).'); return; }
-    if (!month)             { alert('Please select a Month of Claim.'); return; }
-
-    const round = fieldMaintRounds.find(r => String(r.id) === String(roundId));
-    if (!round)             { alert('Selected round not found.'); return; }
-
-    // Upsert — if claim for same round + block + month exists, update it
-    const existing = maintClaims.findIndex(c =>
-        String(c.roundId) === String(roundId) &&
-        c.blockName === blockName &&
-        c.month === month
-    );
-    if (existing >= 0) {
-        if (!confirm(`A claim for "${round.name}" / "${blockName}" in ${month} already exists. Update it?`)) return;
-        maintClaims[existing].claimedArea = claimedArea;
-    } else {
-        maintClaims.push({ id: Date.now(), roundId: round.id, roundName: round.name,
-                           blockName, claimedArea, month });
-    }
-
-    save(STORAGE_KEYS.maintClaims, maintClaims);
-    document.getElementById('mpClaimedArea').value = '';
-    renderMaintProgressTables();
-
-    // Button feedback
-    const btn = document.querySelector('button[onclick="saveMaintClaim()"]');
-    if (btn) {
-        const orig = btn.textContent;
-        btn.textContent = '✅ Saved!'; btn.style.background = '#15803d';
-        setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1500);
-    }
-}
-
-/** Delete a maintenance claim */
-function deleteMaintClaim(id) {
-    if (!confirm('Delete this claim?')) return;
-    maintClaims = maintClaims.filter(c => String(c.id) !== String(id));
-    save(STORAGE_KEYS.maintClaims, maintClaims);
-    renderMaintProgressTables();
-}
-
-// ── Chemical Ingredient ────────────────────────────────────────────
-
-/** Save a chemical ingredient definition */
-function saveChemIngredient() {
-    const name      = document.getElementById('ciName').value.trim();
-    const itemId    = document.getElementById('ciItem').value;
-    const unit      = document.getElementById('ciUnit').value;
-    const maxDosage = parseFloat(document.getElementById('ciMaxDosage').value);
-
-    if (!name)                         { alert('Please enter an Ingredient Name.'); return; }
-    if (!itemId)                       { alert('Please select a Chemical Item.'); return; }
-    if (!maxDosage || maxDosage <= 0)  { alert('Please enter a valid Max Dosage Rate (> 0).'); return; }
-
-    const item = items.find(i => String(i.id) === String(itemId));
-    if (!item) { alert('Selected chemical not found.'); return; }
-
-    chemIngredients.push({ id: Date.now(), name, itemId: item.id, itemName: item.name,
-                           unit, maxDosage });
-    save(STORAGE_KEYS.chemIngredients, chemIngredients);
-
-    document.getElementById('ciName').value     = '';
-    document.getElementById('ciItem').value     = '';
-    document.getElementById('ciMaxDosage').value = '';
-
-    renderCiTable();
-    renderMaintProgressTables();
-}
-
-/** Delete a chemical ingredient */
-function deleteChemIngredient(id) {
-    if (!confirm('Delete this ingredient?')) return;
-    chemIngredients = chemIngredients.filter(c => String(c.id) !== String(id));
-    save(STORAGE_KEYS.chemIngredients, chemIngredients);
-    renderCiTable();
-    renderMaintProgressTables();
-}
-
-/** Render the chemical ingredient setup table */
-function renderCiTable() {
-    const body = document.getElementById('ciTableBody');
-    if (!body) return;
-    body.innerHTML = '';
-    if (chemIngredients.length === 0) {
-        body.innerHTML = '<tr><td colspan="5" class="px-3 py-3 text-center text-gray-400">No ingredients defined yet.</td></tr>';
-        return;
-    }
-    chemIngredients.forEach(ci => {
-        const tr = document.createElement('tr');
-        tr.className = 'border-b border-blue-50 hover:bg-blue-50';
-        tr.innerHTML = `
-            <td class="px-3 py-2 font-semibold">${ci.name}</td>
-            <td class="px-3 py-2">${ci.itemName}</td>
-            <td class="px-3 py-2">${ci.unit}</td>
-            <td class="px-3 py-2 text-right font-bold">${ci.maxDosage}</td>
-            <td class="px-3 py-2">
-                <button class="text-xs bg-red-100 hover:bg-red-200 text-red-800 font-semibold px-3 py-1 rounded"
-                    onclick="deleteChemIngredient('${ci.id}')">🗑 Delete</button>
-            </td>`;
-        body.appendChild(tr);
-    });
-}
-
-// ── Progress bar helper ────────────────────────────────────────────
-function progressBar(pct) {
-    const clamped = Math.min(100, pct);
-    const colour  = pct >= 100 ? '#166534' : pct >= 50 ? '#d97706' : '#dc2626';
-    return `
-        <div style="display:flex;align-items:center;gap:6px;min-width:110px;">
-            <div style="flex:1;background:#e5e7eb;border-radius:99px;height:8px;overflow:hidden;">
-                <div style="width:${clamped.toFixed(1)}%;background:${colour};height:100%;border-radius:99px;"></div>
-            </div>
-            <span style="color:${colour};font-weight:700;white-space:nowrap;font-size:0.8rem;">${pct.toFixed(1)}%</span>
-        </div>`;
-}
-
-function statusBadge(used, max) {
-    if (!max || max <= 0) return '<span class="text-gray-400 text-xs">—</span>';
-    if (used > max) return '<span class="inline-block bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">⚠️ Exceeded</span>';
-    return '<span class="inline-block bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">✅ OK</span>';
-}
-
-// ── Render all 4 tables ────────────────────────────────────────────
-function renderMaintProgressTables() {
-    renderMpByRound();
-    renderMpByBlock();
-    renderChemByRound();
-    renderChemByBlock();
-}
-
-/** a) Maintenance Progress by Round */
-function renderMpByRound() {
-    const body = document.getElementById('mpByRoundBody');
-    if (!body) return;
-    body.innerHTML = '';
-
-    if (fieldMaintRounds.length === 0 || maintClaims.length === 0) {
-        body.innerHTML = '<tr><td colspan="5" class="px-3 py-3 text-center text-gray-400">No data yet. Add maintenance rounds and claims above.</td></tr>';
-        return;
-    }
-
-    // Group claims by roundId + month
-    const grouped = {};
-    maintClaims.forEach(c => {
-        const key = `${c.roundId}||${c.month}`;
-        if (!grouped[key]) grouped[key] = { roundId: c.roundId, roundName: c.roundName, month: c.month, totalClaimed: 0 };
-        grouped[key].totalClaimed += parseFloat(c.claimedArea) || 0;
-    });
-
-    Object.values(grouped).forEach(g => {
-        const round       = fieldMaintRounds.find(r => String(r.id) === String(g.roundId));
-        const roundBlocks = round && round.blocks && round.blocks.length > 0 ? round.blocks : locations.map(l => l.name);
-        const totalArea   = roundBlocks.reduce((s, b) => {
-            const loc = locations.find(l => l.name === b);
-            return s + (loc ? parseFloat(loc.area) || 0 : 0);
-        }, 0);
-        const pct = totalArea > 0 ? (g.totalClaimed / totalArea) * 100 : 0;
-
-        const tr = document.createElement('tr');
-        tr.className = 'border-b border-green-100 hover:bg-green-50';
-        tr.innerHTML = `
-            <td class="px-3 py-2 font-semibold">🔧 ${g.roundName}</td>
-            <td class="px-3 py-2">${g.month}</td>
-            <td class="px-3 py-2 text-right">${totalArea.toFixed(2)}</td>
-            <td class="px-3 py-2 text-right font-bold text-green-700">${g.totalClaimed.toFixed(2)}</td>
-            <td class="px-3 py-2">${progressBar(pct)}</td>`;
-        body.appendChild(tr);
-    });
-}
-
-/** b) Maintenance Progress by Block */
-function renderMpByBlock() {
-    const body = document.getElementById('mpByBlockBody');
-    if (!body) return;
-    body.innerHTML = '';
-
-    if (maintClaims.length === 0) {
-        body.innerHTML = '<tr><td colspan="7" class="px-3 py-3 text-center text-gray-400">No claims recorded yet.</td></tr>';
-        return;
-    }
-
-    maintClaims.forEach(c => {
-        const loc       = locations.find(l => l.name === c.blockName);
-        const blockArea = loc ? parseFloat(loc.area) || 0 : 0;
-        const claimed   = parseFloat(c.claimedArea) || 0;
-        const pct       = blockArea > 0 ? (claimed / blockArea) * 100 : 0;
-
-        const tr = document.createElement('tr');
-        tr.className = 'border-b border-green-100 hover:bg-green-50';
-        tr.innerHTML = `
-            <td class="px-3 py-2 font-semibold">🔧 ${c.roundName}</td>
-            <td class="px-3 py-2">
-                <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">${c.blockName}</span>
-            </td>
-            <td class="px-3 py-2">${c.month}</td>
-            <td class="px-3 py-2 text-right">${blockArea.toFixed(2)}</td>
-            <td class="px-3 py-2 text-right font-bold text-green-700">${claimed.toFixed(2)}</td>
-            <td class="px-3 py-2">${progressBar(pct)}</td>
-            <td class="px-3 py-2">
-                <button class="text-xs bg-red-100 hover:bg-red-200 text-red-800 font-semibold px-3 py-1 rounded"
-                    onclick="deleteMaintClaim('${c.id}')">🗑</button>
-            </td>`;
-        body.appendChild(tr);
-    });
-}
-
-/** c) Chemical Usage per HA by Round */
-function renderChemByRound() {
-    const body = document.getElementById('chemByRoundBody');
-    if (!body) return;
-    body.innerHTML = '';
-
-    if (chemIngredients.length === 0 || maintClaims.length === 0) {
-        body.innerHTML = '<tr><td colspan="9" class="px-3 py-3 text-center text-gray-400">No data yet. Add ingredient definitions and maintenance claims.</td></tr>';
-        return;
-    }
-
-    // For each round+month+ingredient combination
-    const roundMonths = {};
-    maintClaims.forEach(c => {
-        const key = `${c.roundId}||${c.month}`;
-        if (!roundMonths[key]) roundMonths[key] = { roundId: c.roundId, roundName: c.roundName, month: c.month, totalClaimed: 0, blocks: [] };
-        roundMonths[key].totalClaimed += parseFloat(c.claimedArea) || 0;
-        roundMonths[key].blocks.push(c.blockName);
-    });
-
-    let hasRows = false;
-    Object.values(roundMonths).forEach(rm => {
-        chemIngredients.forEach(ci => {
-            // Sum Out transactions for this chemical item linked to this maintenance round in this period
-            const totalQty = transactions.filter(t =>
-                t.type === 'Out' &&
-                String(t.itemId) === String(ci.itemId) &&
-                t.maintRoundId &&
-                fieldMaintRounds.some(r => String(r.id) === String(t.maintRoundId) && String(r.id) === String(rm.roundId)) &&
-                t.date && t.date.startsWith(rm.month)
-            ).reduce((s, t) => s + (parseFloat(t.qty) || 0), 0);
-
-            if (totalQty === 0) return; // skip zero-use rows
-            hasRows = true;
-
-            const usagePerHa = rm.totalClaimed > 0 ? totalQty / rm.totalClaimed : 0;
-            const tr = document.createElement('tr');
-            tr.className = 'border-b border-orange-50 hover:bg-orange-50';
-            tr.innerHTML = `
-                <td class="px-3 py-2 font-semibold">🔧 ${rm.roundName}</td>
-                <td class="px-3 py-2">${rm.month}</td>
-                <td class="px-3 py-2 font-semibold text-blue-700">${ci.name}</td>
-                <td class="px-3 py-2">${ci.itemName}</td>
-                <td class="px-3 py-2 text-right">${totalQty.toFixed(3)} ${ci.unit}</td>
-                <td class="px-3 py-2 text-right">${rm.totalClaimed.toFixed(2)} Ha</td>
-                <td class="px-3 py-2 text-right font-bold">${usagePerHa.toFixed(3)} ${ci.unit}/Ha</td>
-                <td class="px-3 py-2 text-right">${ci.maxDosage} ${ci.unit}/Ha</td>
-                <td class="px-3 py-2">${statusBadge(usagePerHa, ci.maxDosage)}</td>`;
-            body.appendChild(tr);
-        });
-    });
-
-    if (!hasRows) {
-        body.innerHTML = '<tr><td colspan="9" class="px-3 py-3 text-center text-gray-400">No chemical Out transactions linked to maintenance rounds found for the claimed periods.</td></tr>';
-    }
-}
-
-/** d) Chemical Usage per HA by Block */
-function renderChemByBlock() {
-    const body = document.getElementById('chemByBlockBody');
-    if (!body) return;
-    body.innerHTML = '';
-
-    if (chemIngredients.length === 0 || maintClaims.length === 0) {
-        body.innerHTML = '<tr><td colspan="10" class="px-3 py-3 text-center text-gray-400">No data yet. Add ingredient definitions and maintenance claims.</td></tr>';
-        return;
-    }
-
-    let hasRows = false;
-    maintClaims.forEach(c => {
-        chemIngredients.forEach(ci => {
-            const totalQty = transactions.filter(t =>
-                t.type === 'Out' &&
-                String(t.itemId) === String(ci.itemId) &&
-                t.location === c.blockName &&
-                t.maintRoundId &&
-                fieldMaintRounds.some(r => String(r.id) === String(t.maintRoundId) && String(r.id) === String(c.roundId)) &&
-                t.date && t.date.startsWith(c.month)
-            ).reduce((s, t) => s + (parseFloat(t.qty) || 0), 0);
-
-            if (totalQty === 0) return;
-            hasRows = true;
-
-            const claimed     = parseFloat(c.claimedArea) || 0;
-            const usagePerHa  = claimed > 0 ? totalQty / claimed : 0;
-
-            const tr = document.createElement('tr');
-            tr.className = 'border-b border-orange-50 hover:bg-orange-50';
-            tr.innerHTML = `
-                <td class="px-3 py-2 font-semibold">🔧 ${c.roundName}</td>
-                <td class="px-3 py-2">
-                    <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">${c.blockName}</span>
-                </td>
-                <td class="px-3 py-2">${c.month}</td>
-                <td class="px-3 py-2 font-semibold text-blue-700">${ci.name}</td>
-                <td class="px-3 py-2">${ci.itemName}</td>
-                <td class="px-3 py-2 text-right">${totalQty.toFixed(3)} ${ci.unit}</td>
-                <td class="px-3 py-2 text-right">${claimed.toFixed(2)} Ha</td>
-                <td class="px-3 py-2 text-right font-bold">${usagePerHa.toFixed(3)} ${ci.unit}/Ha</td>
-                <td class="px-3 py-2 text-right">${ci.maxDosage} ${ci.unit}/Ha</td>
-                <td class="px-3 py-2">${statusBadge(usagePerHa, ci.maxDosage)}</td>`;
-            body.appendChild(tr);
-        });
-    });
-
-    if (!hasRows) {
-        body.innerHTML = '<tr><td colspan="10" class="px-3 py-3 text-center text-gray-400">No chemical Out transactions linked to maintenance rounds found for the claimed periods.</td></tr>';
-    }
 }
 </script>
 </body>
