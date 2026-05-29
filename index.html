@@ -1280,6 +1280,8 @@
    SUPABASE CLIENT - connection to the cloud database
    ----------------------------------------------------------------- */
 const SUPABASE_URL = 'https://eukvdlyzhyjohkjqbqjb.supabase.co';
+// const SUPABASE_PUBLISHABLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1a3ZkbHl6aHlqb2hranFicWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2OTg5MzYsImV4cCI6MjA5NDI3NDkzNn0.czKzWGeiujgZ_VpOBZjFaxDjGCca-_-aZ41N5T0gjmk';
+// Supabase Dashboard → Settings → API → "anon public" key (starts with eyJ...)
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_fsL8W-BA5l6lEkYajn2zgA_lQexiLhP';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
@@ -1384,7 +1386,11 @@ async function syncToSupabase(key, data) {
         if (removedIds.length > 0) {
             const { error: delErr } = await supabaseClient
                 .from(table).delete().in('id', removedIds);
-            if (delErr) console.error(`[Supabase] delete ${table}`, delErr);
+            if (delErr) {
+                console.error(`[Supabase] delete ${table}`, delErr);
+                showSyncError(`Delete failed on ${table}: ${delErr.message}`);
+                return;
+            }
         }
 
         if (data.length > 0) {
@@ -1392,13 +1398,34 @@ async function syncToSupabase(key, data) {
             const tagged = data.map(r => ({ ...r, estate: activeEstate }));
             const { error: upErr } = await supabaseClient
                 .from(table).upsert(tagged, { onConflict: 'id' });
-            if (upErr) console.error(`[Supabase] upsert ${table}`, upErr);
+            if (upErr) {
+                console.error(`[Supabase] upsert ${table}`, upErr);
+                showSyncError(`Save failed on ${table}: ${upErr.message}`);
+                return;
+            }
         }
 
         lastKnownIds[table] = currentIds;
     } catch (err) {
         console.error(`[Supabase] sync error for ${table}`, err);
+        showSyncError(`Sync error on ${table}: ${err.message}`);
     }
+}
+
+/** Show a non-blocking red toast at the top-right when a Supabase sync fails */
+function showSyncError(msg) {
+    const toast = document.createElement('div');
+    toast.textContent = '⚠️ Supabase Sync Error: ' + msg;
+    toast.style.cssText = [
+        'position:fixed', 'top:16px', 'right:16px', 'z-index:9999',
+        'background:#dc2626', 'color:#fff', 'font-size:13px', 'font-weight:600',
+        'padding:10px 16px', 'border-radius:8px', 'box-shadow:0 4px 12px rgba(0,0,0,.3)',
+        'max-width:360px', 'line-height:1.4', 'cursor:pointer'
+    ].join(';');
+    toast.title = 'Click to dismiss';
+    toast.onclick = () => toast.remove();
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 8000);
 }
 
 // Pull the full dataset down from Supabase on boot, replacing in-memory
